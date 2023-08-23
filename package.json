@@ -3,9 +3,13 @@
 	"version": "1.0.0",
 	"description": "cloud storage using postgres",
 	"main": "src/index.ts",
-	"type": "module",
+	"engines": {
+    "node": ">=14 <15"
+  },
 	"scripts": {
-		"start": "ts-node-dev --poll src/index.ts",
+		"build": "tsc --watch",
+    "start": "node dist/index.js",
+		"dev": "ts-node-dev --poll src/index.ts",
 		"test": "jest --watch --detectOpenHandles"
 	},
 	"jest": {
