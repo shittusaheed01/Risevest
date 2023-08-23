@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "cloud storage using postgres",
 	"main": "src/index.ts",
+	"type": "module",
 	"scripts": {
 		"start": "ts-node-dev --poll src/index.ts",
 		"test": "jest --watch --detectOpenHandles"
