@@ -4,9 +4,9 @@ import morgan from 'morgan';
 import cors from 'cors';
 
 import { signinRouter } from './routes/signin';
+import { liveRouter } from './routes/live';
 import { folderRouter } from './routes/folder';
 import { fileRouter } from './routes/file';
-// import { signoutRouter } from './routes/signout';
 import { signupRouter } from './routes/signup';
 import { errorHandler } from './middlewares/error-handler';
 import { NotFoundError } from './errors/not-found-error';
@@ -18,6 +18,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 
+app.use(liveRouter);
 app.use(signupRouter);
 app.use(signinRouter);
 app.use(folderRouter);
