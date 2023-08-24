@@ -123,6 +123,7 @@ router.get(
 				'Downloads',
 				`${name}_${Math.floor(Math.random() * 100000)}.${ext}`
 			);
+			console.log(userDownloadFolder);
 
 			axios({
 				method: 'get',
