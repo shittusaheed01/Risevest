@@ -103,7 +103,7 @@ router.get(
 		try {
 			//find file in db and make sure it belongs to the user
 			const file = await db.query(
-				`SELECT * FROM files WHERE AND id = $1`,
+				`SELECT * FROM files WHERE id = $1`,
 				[fileId]
 			);
 
