@@ -94,17 +94,17 @@ router.get(
 //Download File
 router.get(
 	'/api/file/download/:fileId',
-	currentUser,
-	requireAuth,
+	// currentUser,
+	// requireAuth,
 	async (req: Request, res: Response, next: NextFunction) => {
 		const { fileId } = req.params;
-		const user_id = req.user?.id;
+		// const user_id = req.user?.id;
 
 		try {
 			//find file in db and make sure it belongs to the user
 			const file = await db.query(
-				`SELECT * FROM files WHERE user_id = $1 AND id = $2`,
-				[user_id, fileId]
+				`SELECT * FROM files WHERE AND id = $1`,
+				[fileId]
 			);
 
 			const filesObj = file.rows;
