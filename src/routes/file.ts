@@ -116,14 +116,12 @@ router.get(
 			const { url, name } = filesObj[0];
 			const lastDotIndex = url.lastIndexOf('.');
 			const ext = url.substring(lastDotIndex + 1);
-			// // Cloudinary URL of the file you want to download
-			// const cloudinaryUrl = 'YOUR_CLOUDINARY_URL_HERE';
 
 			// Set the local path where you want to save the downloaded file
 			const userDownloadFolder = path.join(
 				require('os').homedir(),
 				'Downloads',
-				`risevestAPI_${name}.${ext}`
+				`${name}_${Math.floor(Math.random() * 100000)}.${ext}`
 			);
 
 			axios({
@@ -151,14 +149,24 @@ router.get(
 					writer.on('error', (err) => {
 						console.error('Error downloading and saving file:', err);
 						return res.status(400).json({
-							errors: [{ message: 'Error downloading and saving file' }],
+							errors: [
+								{
+									success: false,
+									message: 'Error downloading and saving file',
+								},
+							],
 						});
 					});
 				})
 				.catch((error) => {
 					console.error('Error fetching Cloudinary URL:', error);
 					res.status(400).json({
-						errors: [{ message: 'Error fetching Cloudinary URL' }],
+						errors: [
+							{
+								success: false,
+								message: 'Error fetching File',
+							},
+						],
 					});
 				});
 		} catch (error) {
@@ -190,7 +198,7 @@ router.post(
 			}
 
 			//check file type
-			let resource_type: "image" | "video" | "raw"
+			let resource_type: 'image' | 'video' | 'raw';
 			let type: string;
 			const { mimetype } = req.file;
 			if (mimetype.includes('image')) {
@@ -205,7 +213,7 @@ router.post(
 			}
 
 			//upload file to cloudinary, check file size and save file to db
-			if (req.file.size > 2 * 1024 * 1024) {
+			if (req.file.size > 99 * 1024 * 1024) {
 				console.log('large file');
 				cloudinary.uploader.upload_large(
 					req.file.path,
@@ -222,7 +230,12 @@ router.post(
 						//save file to db
 						const newFile = await db.query(
 							`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
-							[req.user?.id, name ? `${name}_${Date.now()}` : `${Date.now()}`, url, type]
+							[
+								req.user?.id,
+								name ? `${name}_${Date.now()}` : `${Date.now()}`,
+								url,
+								type,
+							]
 						);
 
 						const newFileObj = newFile.rows[0];
@@ -252,7 +265,14 @@ router.post(
 						//save file to db
 						const newFile = await db.query(
 							`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
-							[req.user?.id, name ? `${name}_${new Date().getTime()}` : `${new Date().getTime()}`, url, type]
+							[
+								req.user?.id,
+								name
+									? `${name}_${new Date().getTime()}`
+									: `${new Date().getTime()}`,
+								url,
+								type,
+							]
 						);
 
 						const newFileObj = newFile.rows[0];
@@ -267,7 +287,6 @@ router.post(
 					}
 				);
 			}
-
 		} catch (error) {
 			console.log(error);
 			next(error);

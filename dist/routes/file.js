@@ -98,10 +98,8 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
         const { url, name } = filesObj[0];
         const lastDotIndex = url.lastIndexOf('.');
         const ext = url.substring(lastDotIndex + 1);
-        // // Cloudinary URL of the file you want to download
-        // const cloudinaryUrl = 'YOUR_CLOUDINARY_URL_HERE';
         // Set the local path where you want to save the downloaded file
-        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads', `risevestAPI_${name}.${ext}`);
+        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads', `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
         (0, axios_1.default)({
             method: 'get',
             url,
@@ -124,14 +122,24 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
             writer.on('error', (err) => {
                 console.error('Error downloading and saving file:', err);
                 return res.status(400).json({
-                    errors: [{ message: 'Error downloading and saving file' }],
+                    errors: [
+                        {
+                            success: false,
+                            message: 'Error downloading and saving file',
+                        },
+                    ],
                 });
             });
         })
             .catch((error) => {
             console.error('Error fetching Cloudinary URL:', error);
             res.status(400).json({
-                errors: [{ message: 'Error fetching Cloudinary URL' }],
+                errors: [
+                    {
+                        success: false,
+                        message: 'Error fetching File',
+                    },
+                ],
             });
         });
     }
@@ -170,7 +178,7 @@ router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requi
             type = mimetype.split('/')[0];
         }
         //upload file to cloudinary, check file size and save file to db
-        if (req.file.size > 2 * 1024 * 1024) {
+        if (req.file.size > 99 * 1024 * 1024) {
             console.log('large file');
             cloudinary_1.v2.uploader.upload_large(req.file.path, { resource_type, folder: 'risevest' }, function (err, result) {
                 var _a;
@@ -183,7 +191,12 @@ router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requi
                     }
                     const { secure_url: url } = result;
                     //save file to db
-                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id, name ? `${name}_${Date.now()}` : `${Date.now()}`, url, type]);
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [
+                        (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
+                        name ? `${name}_${Date.now()}` : `${Date.now()}`,
+                        url,
+                        type,
+                    ]);
                     const newFileObj = newFile.rows[0];
                     return res.status(200).json({
                         success: true,
@@ -207,7 +220,14 @@ router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requi
                     }
                     const { secure_url: url } = result;
                     //save file to db
-                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id, name ? `${name}_${new Date().getTime()}` : `${new Date().getTime()}`, url, type]);
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [
+                        (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
+                        name
+                            ? `${name}_${new Date().getTime()}`
+                            : `${new Date().getTime()}`,
+                        url,
+                        type,
+                    ]);
                     const newFileObj = newFile.rows[0];
                     return res.status(200).json({
                         success: true,
