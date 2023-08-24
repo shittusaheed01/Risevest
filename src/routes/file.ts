@@ -141,7 +141,8 @@ router.get(
 						console.log('File downloaded and saved to Downloads folder.');
 						return res.status(200).json({
 							success: true,
-							message: "File downloaded and saved to user's download folder.",
+							message: `File downloaded and saved to user's download folder.`,
+							folder: userDownloadFolder,
 						});
 					});
 
