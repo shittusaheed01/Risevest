@@ -32,8 +32,12 @@ router.post('/api/users/signup', [
         .trim()
         .isLength({ min: 4, max: 20 })
         .withMessage('Password must be between 4 and 20 characters'),
+    (0, express_validator_1.body)('role')
+        .optional()
+        .matches(/^(admin|user)$/)
+        .withMessage('Role must be either admin or user'),
 ], validate_request_1.validateRequest, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, password, fullname } = req.body;
+    const { email, password, fullname, role = "user" } = req.body;
     try {
         const hashedPassword = yield (0, password_1.hashPassword)(password);
         // Check if user exists
@@ -42,7 +46,7 @@ router.post('/api/users/signup', [
             throw new bad_request_error_1.BadRequestError('Email already in use');
         }
         // Create user
-        const newUser = yield db_1.db.query(`INSERT INTO users (email, password, fullname) VALUES ($1, $2, $3) RETURNING *`, [email, hashedPassword, fullname]);
+        const newUser = yield db_1.db.query(`INSERT INTO users (email, password, fullname, role) VALUES ($1, $2, $3, $4) RETURNING *`, [email, hashedPassword, fullname, role]);
         const newUserObj = newUser.rows[0];
         const userJwt = jsonwebtoken_1.default.sign({
             id: newUserObj.id,
@@ -55,6 +59,7 @@ router.post('/api/users/signup', [
                     id: newUserObj.id,
                     email: newUserObj.email,
                     fullname: newUserObj.fullname,
+                    role: newUserObj.role,
                 },
                 token: userJwt,
             },

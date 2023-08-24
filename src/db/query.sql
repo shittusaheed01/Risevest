@@ -1,21 +1,26 @@
--- Create Database: CREATE DATABASE risevest;
--- Connect to database: \c risevest;
--- create user table: CREATE TABLE users(
---     id SERIAL PRIMARY KEY NOT NULL,
---     fullname VARCHAR(255) NOT NULL,
---     email VARCHAR(255) NOT NULL UNIQUE,
---     password VARCHAR(255),
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- Create Database: 
+    CREATE DATABASE risevest;
+-- Connect to database: 
+    \c risevest;
+-- Drop Database:
+    DROP DATABASE risevest;
 
--- CREATE TABLE users(
---     id SERIAL PRIMARY KEY NOT NULL,
---     fullname VARCHAR(255) NOT NULL,
---     email VARCHAR(255) NOT NULL UNIQUE,
---     password VARCHAR(255)
--- );
+--create role enum:
+CREATE TYPE ROLE_ENUM AS ENUM ('user', 'admin');
 
--- create user folder: 
+-- create user db:
+CREATE TABLE users(
+    id SERIAL PRIMARY KEY NOT NULL,
+    fullname VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role ROLE_ENUM DEFAULT 'user',
+    password VARCHAR(255)
+);
+
+--drop users db:
+DROP TABLE users;
+
+-- create folder db: 
 CREATE TABLE folders(
     id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -25,10 +30,26 @@ CREATE TABLE folders(
 	      REFERENCES users(id)
 );
 
- --NOT NULL,
---     email VARCHAR(255) NOT NULL UNIQUE,
---     password VARCHAR(255),
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+--drop folder db:
+DROP TABLE folders;
 
---list all tables: \d;
+-- create file db: 
+CREATE TABLE files(
+    id SERIAL PRIMARY KEY NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    type VARCHAR(255) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    unsafe VARCHAR(255),
+    user_id INTEGER NOT NULL,
+    folder_id INTEGER,
+    CONSTRAINT fk_user
+      FOREIGN KEY(user_id) 
+	      REFERENCES users(id),
+      FOREIGN KEY (folder_id) REFERENCES folders(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+--drop file db:
+DROP TABLE files;
+

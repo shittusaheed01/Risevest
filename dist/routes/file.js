@@ -14,15 +14,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fileRouter = void 0;
 const express_1 = __importDefault(require("express"));
+const express_validator_1 = require("express-validator");
 const cloudinary_1 = require("cloudinary");
 const axios_1 = __importDefault(require("axios"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const db_1 = require("../db");
+const validate_request_1 = require("../middlewares/validate-request");
 const bad_request_error_1 = require("../errors/bad-request-error");
 const current_user_1 = require("../middlewares/current-user");
 const require_auth_1 = require("../middlewares/require-auth");
 const multer_1 = require("../middlewares/multer");
+const not_authorized_error_1 = require("../errors/not-authorized-error");
 const router = express_1.default.Router();
 exports.fileRouter = router;
 cloudinary_1.v2.config({
@@ -30,19 +33,20 @@ cloudinary_1.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_SECRET_KEY,
 });
+//Gets All Users Files
 router.get('/api/file', current_user_1.currentUser, require_auth_1.requireAuth, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const folders = yield db_1.db.query(`SELECT * FROM folders WHERE user_id = $1`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id]);
-        const foldersObj = folders.rows;
-        if (!foldersObj.length) {
-            throw new bad_request_error_1.BadRequestError('No folders found');
+        const files = yield db_1.db.query(`SELECT * FROM files WHERE user_id = $1 ORDER BY id DESC`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id]);
+        const filesObj = files.rows;
+        if (!filesObj.length) {
+            throw new bad_request_error_1.BadRequestError('No file found');
         }
         res.status(200).json({
             status: 'success',
-            results: folders.rows.length,
+            results: files.rows.length,
             data: {
-                folders: folders.rows,
+                files: filesObj,
             },
         });
     }
@@ -51,83 +55,170 @@ router.get('/api/file', current_user_1.currentUser, require_auth_1.requireAuth, 
         next(error);
     }
 }));
-router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requireAuth, multer_1.multerMiddleware, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name } = req.body;
+//Admin Gets All Users Files
+router.get('/api/file/admin', current_user_1.currentUser, require_auth_1.requireAuth, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
     try {
-        if (!req.file) {
-            throw new bad_request_error_1.BadRequestError('Attach a file to upload');
+        const admin = yield db_1.db.query(`SELECT role FROM users WHERE id = $1 AND role = 'admin'`, [(_b = req.user) === null || _b === void 0 ? void 0 : _b.id]);
+        const adminObj = admin.rows;
+        if (!adminObj.length) {
+            throw new not_authorized_error_1.NotAuthorizedError();
         }
-        if (req.file.size > 99 * 1024 * 1024) {
-            cloudinary_1.v2.uploader.upload_large(req.file.path, { resource_type: 'video' }, function (err, result) {
-                if (err) {
-                    console.log(err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Error',
-                    });
-                }
-                res.status(200).json({
-                    success: true,
-                    message: 'Uploaded!',
-                    data: result,
-                });
-            });
+        const files = yield db_1.db.query(`SELECT * FROM files ORDER BY id DESC`);
+        const filesObj = files.rows;
+        if (!filesObj.length) {
+            throw new bad_request_error_1.BadRequestError('No file uploaded');
         }
-        else {
-            cloudinary_1.v2.uploader.upload(req.file.path, function (err, result) {
-                if (err) {
-                    console.log(err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Error',
-                    });
-                }
-                res.status(200).json({
-                    success: true,
-                    message: 'Uploaded!',
-                    data: result,
-                });
-            });
-        }
+        res.status(200).json({
+            status: 'success',
+            results: files.rows.length,
+            data: {
+                files: filesObj,
+            },
+        });
     }
     catch (error) {
         console.log(error);
         next(error);
     }
 }));
+//Download File
 router.get('/api/file/download/:fileId', current_user_1.currentUser, require_auth_1.requireAuth, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _c;
     const { fileId } = req.params;
-    const user_id = (_b = req.user) === null || _b === void 0 ? void 0 : _b.id;
+    const user_id = (_c = req.user) === null || _c === void 0 ? void 0 : _c.id;
     try {
         //find file in db and make sure it belongs to the user
+        const file = yield db_1.db.query(`SELECT * FROM files WHERE user_id = $1 AND id = $2`, [user_id, fileId]);
+        const filesObj = file.rows;
+        if (!filesObj.length) {
+            throw new bad_request_error_1.BadRequestError('No file found');
+        }
         //get the file url and file name from db
-        // Cloudinary URL of the file you want to download
-        const cloudinaryUrl = 'YOUR_CLOUDINARY_URL_HERE';
+        const { url, name } = filesObj[0];
+        const lastDotIndex = url.lastIndexOf('.');
+        const ext = url.substring(lastDotIndex + 1);
+        // // Cloudinary URL of the file you want to download
+        // const cloudinaryUrl = 'YOUR_CLOUDINARY_URL_HERE';
         // Set the local path where you want to save the downloaded file
-        const localFilePath = path_1.default.join(__dirname, 'downloaded_file.jpg');
+        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads', `risevestAPI_${name}.${ext}`);
         (0, axios_1.default)({
             method: 'get',
-            url: cloudinaryUrl,
+            url,
             responseType: 'stream', // Specify the response type as stream
         })
             .then((response) => {
             // Create a writable stream to save the downloaded data
-            const writer = fs_1.default.createWriteStream(localFilePath);
+            const writer = fs_1.default.createWriteStream(userDownloadFolder);
             // Pipe the response stream to the writer
             response.data.pipe(writer);
             // When the download is complete, handle any necessary cleanup
             writer.on('finish', () => {
-                console.log('File downloaded and saved.');
+                console.log('File downloaded and saved to Downloads folder.');
+                return res.status(200).json({
+                    success: true,
+                    message: "File downloaded and saved to user's download folder.",
+                });
             });
             // Handle errors during download
             writer.on('error', (err) => {
                 console.error('Error downloading and saving file:', err);
+                return res.status(400).json({
+                    errors: [{ message: 'Error downloading and saving file' }],
+                });
             });
         })
             .catch((error) => {
             console.error('Error fetching Cloudinary URL:', error);
+            res.status(400).json({
+                errors: [{ message: 'Error fetching Cloudinary URL' }],
+            });
         });
+    }
+    catch (error) {
+        console.log(error);
+        next(error);
+    }
+}));
+//Upload File
+router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requireAuth, multer_1.multerMiddleware, [
+    (0, express_validator_1.body)('name')
+        .optional()
+        .trim()
+        .matches(/^[a-zA-Z0-9_]+$/)
+        .withMessage('Name must be alphanumeric and underscore only'),
+], validate_request_1.validateRequest, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name } = req.body;
+    try {
+        if (!req.file) {
+            throw new bad_request_error_1.BadRequestError('Attach a file to upload');
+        }
+        //check file type
+        let resource_type;
+        let type;
+        const { mimetype } = req.file;
+        if (mimetype.includes('image')) {
+            resource_type = 'image';
+            type = 'image';
+        }
+        else if (mimetype.includes('video')) {
+            resource_type = 'video';
+            type = 'video';
+        }
+        else {
+            resource_type = 'raw';
+            type = mimetype.split('/')[0];
+        }
+        //upload file to cloudinary, check file size and save file to db
+        if (req.file.size > 2 * 1024 * 1024) {
+            console.log('large file');
+            cloudinary_1.v2.uploader.upload_large(req.file.path, { resource_type, folder: 'risevest' }, function (err, result) {
+                var _a;
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            errors: [{ message: err.message }],
+                        });
+                    }
+                    const { secure_url: url } = result;
+                    //save file to db
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id, name ? `${name}_${Date.now()}` : `${Date.now()}`, url, type]);
+                    const newFileObj = newFile.rows[0];
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Uploaded!',
+                        data: {
+                            file: newFileObj,
+                        },
+                    });
+                });
+            });
+        }
+        else {
+            cloudinary_1.v2.uploader.upload(req.file.path, { resource_type, folder: 'risevest' }, function (err, result) {
+                var _a;
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            errors: [{ message: err.message }],
+                        });
+                    }
+                    const { secure_url: url } = result;
+                    //save file to db
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [(_a = req.user) === null || _a === void 0 ? void 0 : _a.id, name ? `${name}_${new Date().getTime()}` : `${new Date().getTime()}`, url, type]);
+                    const newFileObj = newFile.rows[0];
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Uploaded!',
+                        data: {
+                            file: newFileObj,
+                        },
+                    });
+                });
+            });
+        }
     }
     catch (error) {
         console.log(error);

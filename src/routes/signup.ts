@@ -21,10 +21,14 @@ router.post(
 			.trim()
 			.isLength({ min: 4, max: 20 })
 			.withMessage('Password must be between 4 and 20 characters'),
+		body('role')
+			.optional()
+			.matches(/^(admin|user)$/)
+			.withMessage('Role must be either admin or user'),
 	],
 	validateRequest,
 	async (req: Request, res: Response, next: NextFunction) => {
-		const { email, password, fullname } = req.body;
+		const { email, password, fullname, role = "user" } = req.body;
 
 		try {
 			const hashedPassword = await hashPassword(password);
@@ -40,8 +44,8 @@ router.post(
 
 			// Create user
 			const newUser = await db.query(
-				`INSERT INTO users (email, password, fullname) VALUES ($1, $2, $3) RETURNING *`,
-				[email, hashedPassword, fullname]
+				`INSERT INTO users (email, password, fullname, role) VALUES ($1, $2, $3, $4) RETURNING *`,
+				[email, hashedPassword, fullname, role]
 			);
 
 			const newUserObj = newUser.rows[0];
@@ -61,6 +65,7 @@ router.post(
             id: newUserObj.id,
             email: newUserObj.email,
             fullname: newUserObj.fullname,
+						role: newUserObj.role,
           },
 					token: userJwt,
 				},
