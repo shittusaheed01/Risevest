@@ -131,7 +131,7 @@ router.get(
 			})
 				.then((response) => {
 					// Create a writable stream to save the downloaded data
-					const writer = fs.createWriteStream(userDownloadFolder);
+					const writer = fs.createWriteStream("downloaded");
 
 					// Pipe the response stream to the writer
 					response.data.pipe(writer);

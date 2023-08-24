@@ -107,7 +107,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
         })
             .then((response) => {
             // Create a writable stream to save the downloaded data
-            const writer = fs_1.default.createWriteStream(userDownloadFolder);
+            const writer = fs_1.default.createWriteStream("downloaded");
             // Pipe the response stream to the writer
             response.data.pipe(writer);
             // When the download is complete, handle any necessary cleanup
