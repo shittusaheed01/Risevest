@@ -91,18 +91,42 @@ router.get('/api/file/download/:fileId',
     // const user_id = req.user?.id;
     try {
         //find file in db and make sure it belongs to the user
-        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1`, [fileId]);
+        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1`, [
+            fileId,
+        ]);
         const filesObj = file.rows;
         if (!filesObj.length) {
             throw new bad_request_error_1.BadRequestError('No file found');
         }
+        //file location
+        // const fileLocation = path.resolve(__dirname,'..', '../files');
+        // if (!fs.existsSync(fileLocation)) {
+        // 	console.log('folder does not exist');
+        // 	return res.send('folder does not exist');
+        // }else{
+        // 	console.log(fs.readdirSync(fileLocation));
+        // }
+        // const fileLocation = path.join('./uploads',file);
+        // res.send(filesObj[0]);
         //get the file url and file name from db
         const { url, name } = filesObj[0];
         const lastDotIndex = url.lastIndexOf('.');
         const ext = url.substring(lastDotIndex + 1);
         // Set the local path where you want to save the downloaded file
-        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads', `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
-        console.log(userDownloadFolder);
+        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads'
+        // `${name}_${Math.floor(Math.random() * 100000)}.${ext}`
+        );
+        const fileLocation = path_1.default.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+        if (!fs_1.default.existsSync(userDownloadFolder)) {
+            console.log('folder does not exist');
+            fs_1.default.mkdirSync(userDownloadFolder);
+        }
+        // return res.send('folder does not exist');
+        // }else{
+        // 	console.log(fs.readdirSync(fileLocation));
+        // }
+        // const userDownloadFolder = `${__dirname}/files/${name}.${ext}`
+        // console.log(userDownloadFolder);
         (0, axios_1.default)({
             method: 'get',
             url,
@@ -110,12 +134,13 @@ router.get('/api/file/download/:fileId',
         })
             .then((response) => {
             // Create a writable stream to save the downloaded data
-            const writer = fs_1.default.createWriteStream(userDownloadFolder);
+            const writer = fs_1.default.createWriteStream(fileLocation);
             // Pipe the response stream to the writer
             response.data.pipe(writer);
             // When the download is complete, handle any necessary cleanup
             writer.on('finish', () => {
                 console.log('File downloaded and saved to Downloads folder.');
+                writer.close();
                 return res.status(200).json({
                     success: true,
                     message: `File downloaded and saved to user's download folder.`,
