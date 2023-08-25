@@ -83,13 +83,15 @@ router.get('/api/file/admin', current_user_1.currentUser, require_auth_1.require
     }
 }));
 //Download File
-router.get('/api/file/download/:fileId', current_user_1.currentUser, require_auth_1.requireAuth, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
+router.get('/api/file/download/:fileId', 
+// currentUser,
+// requireAuth,
+(req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { fileId } = req.params;
-    const user_id = (_c = req.user) === null || _c === void 0 ? void 0 : _c.id;
+    // const user_id = req.user?.id;
     try {
         //find file in db and make sure it belongs to the user
-        const file = yield db_1.db.query(`SELECT * FROM files WHERE user_id = $1 AND id = $2`, [user_id, fileId]);
+        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1`, [fileId]);
         const filesObj = file.rows;
         if (!filesObj.length) {
             throw new bad_request_error_1.BadRequestError('No file found');
@@ -100,6 +102,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
         const ext = url.substring(lastDotIndex + 1);
         // Set the local path where you want to save the downloaded file
         const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads', `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+        console.log(userDownloadFolder);
         (0, axios_1.default)({
             method: 'get',
             url,
@@ -107,7 +110,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
         })
             .then((response) => {
             // Create a writable stream to save the downloaded data
-            const writer = fs_1.default.createWriteStream("downloaded");
+            const writer = fs_1.default.createWriteStream(userDownloadFolder);
             // Pipe the response stream to the writer
             response.data.pipe(writer);
             // When the download is complete, handle any necessary cleanup
@@ -115,7 +118,8 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
                 console.log('File downloaded and saved to Downloads folder.');
                 return res.status(200).json({
                     success: true,
-                    message: "File downloaded and saved to user's download folder.",
+                    message: `File downloaded and saved to user's download folder.`,
+                    folder: userDownloadFolder,
                 });
             });
             // Handle errors during download
