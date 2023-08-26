@@ -101,7 +101,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
         const lastDotIndex = url.lastIndexOf('.');
         const ext = url.substring(lastDotIndex + 1);
         const userDownloadFolder = path_1.default.join(__dirname, '..', '..', `downloads`);
-        const fileLocation = path_1.default.resolve(`${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+        const fileLocation = path_1.default.resolve(`./${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
         // if (!fs.existsSync(userDownloadFolder)) {
         // 	console.log('folder does not exist');
         // 	fs.mkdirSync(userDownloadFolder);
@@ -121,6 +121,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
             writer.on('finish', () => {
                 console.log('File downloaded and saved to Downloads folder.');
                 writer.close();
+                res.send(fileLocation);
                 // res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
                 // res.download(fileLocation, `${name}.${ext}`
                 // );

@@ -123,7 +123,7 @@ router.get(
 				`downloads`
 			);
 			
-			const fileLocation = path.resolve(`${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+			const fileLocation = path.resolve(`./${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
 			// if (!fs.existsSync(userDownloadFolder)) {
 			// 	console.log('folder does not exist');
 			// 	fs.mkdirSync(userDownloadFolder);
@@ -147,6 +147,7 @@ router.get(
 					writer.on('finish', () => {
 						console.log('File downloaded and saved to Downloads folder.');
 						writer.close();
+						res.send(fileLocation)
 						// res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
 						// res.download(fileLocation, `${name}.${ext}`
 						// );
