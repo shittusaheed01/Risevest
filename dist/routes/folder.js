@@ -57,7 +57,7 @@ router.get('/api/folder/:id', current_user_1.currentUser, require_auth_1.require
             status: 'success',
             results: folders.rows.length,
             data: {
-                folders: folders.rows[0],
+                folders: folders.rows,
             },
         });
     }

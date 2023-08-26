@@ -60,7 +60,7 @@ router.get(
 				status: 'success',
 				results: folders.rows.length,
 				data: {
-					folders: folders.rows[0],
+					folders: folders.rows,
 				},
 			});
 		} catch (error) {
