@@ -122,11 +122,12 @@ router.get(
 				'..',
 				`downloads`
 			);
-			const fileLocation = path.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
-			if (!fs.existsSync(userDownloadFolder)) {
-				console.log('folder does not exist');
-				fs.mkdirSync(userDownloadFolder);
-			}
+			
+			const fileLocation = path.resolve(`${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+			// if (!fs.existsSync(userDownloadFolder)) {
+			// 	console.log('folder does not exist');
+			// 	fs.mkdirSync(userDownloadFolder);
+			// }
 
 			console.log(fileLocation)
 
