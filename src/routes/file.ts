@@ -113,22 +113,14 @@ router.get(
 
 			//get the file url and file name from db
 			const { url, name, ext } = filesObj[0];
-			// const lastDotIndex = url.lastIndexOf('.');
-			// const ext = url.substring(lastDotIndex + 1);
 
 			const userDownloadFolder = path.join(__dirname, '..', '..', `downloads`);
 
-			// const fileLocation = path.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
-			// if (!fs.existsSync(userDownloadFolder)) {
-			// 	console.log('folder does not exist');
-			// 	fs.mkdirSync(userDownloadFolder);
-			// }
-
-			const fileLocation = path.join(
-				__dirname,
-				'downloads',
-				`${name}_${Math.floor(Math.random() * 100000)}.${ext}`
-			);
+			const fileLocation = path.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+			if (!fs.existsSync(userDownloadFolder)) {
+				console.log('folder does not exist');
+				fs.mkdirSync(userDownloadFolder);
+			}
 
 			console.log(fileLocation);
 
@@ -148,10 +140,10 @@ router.get(
 					writer.on('finish', () => {
 						console.log('File downloaded and saved to Downloads folder.');
 						writer.close();
-						res.send('Saved');
-						// res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
-						// res.download(fileLocation, `${name}.${ext}`
-						// );
+						// res.send('Saved');
+						res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
+						res.download(fileLocation, `${name}.${ext}`
+						);
 					});
 
 					// Handle errors during download
