@@ -128,6 +128,8 @@ router.get(
 				fs.mkdirSync(userDownloadFolder);
 			}
 
+			console.log(fileLocation)
+
 			axios({
 				method: 'get',
 				url,
@@ -144,9 +146,9 @@ router.get(
 					writer.on('finish', () => {
 						console.log('File downloaded and saved to Downloads folder.');
 						writer.close();
-						res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
-						res.download(fileLocation, `${name}.${ext}`
-						);
+						// res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
+						// res.download(fileLocation, `${name}.${ext}`
+						// );
 					});
 
 					// Handle errors during download

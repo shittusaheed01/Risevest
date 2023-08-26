@@ -106,6 +106,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
             console.log('folder does not exist');
             fs_1.default.mkdirSync(userDownloadFolder);
         }
+        console.log(fileLocation);
         (0, axios_1.default)({
             method: 'get',
             url,
@@ -120,8 +121,9 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
             writer.on('finish', () => {
                 console.log('File downloaded and saved to Downloads folder.');
                 writer.close();
-                res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
-                res.download(fileLocation, `${name}.${ext}`);
+                // res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
+                // res.download(fileLocation, `${name}.${ext}`
+                // );
             });
             // Handle errors during download
             writer.on('error', (err) => {
