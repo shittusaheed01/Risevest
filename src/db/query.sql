@@ -18,7 +18,7 @@ CREATE TABLE users(
 );
 
 --drop users db:
-DROP TABLE users;
+DROP TABLE users cascade;
 
 -- create folder db: 
 CREATE TABLE folders(
