@@ -39,7 +39,8 @@ CREATE TABLE files(
     name VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(255) NOT NULL,
     url VARCHAR(255) NOT NULL,
-    unsafe VARCHAR(255),
+    ext VARCHAR(255) NOT NULL,
+    unsafe BOOLEAN NOT NULL DEFAULT FALSE,
     user_id INTEGER NOT NULL,
     folder_id INTEGER,
     CONSTRAINT fk_user

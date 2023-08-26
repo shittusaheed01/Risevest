@@ -12,7 +12,6 @@ import { currentUser } from '../middlewares/current-user';
 import { requireAuth } from '../middlewares/require-auth';
 import { multerMiddleware } from '../middlewares/multer';
 import { NotAuthorizedError } from '../errors/not-authorized-error';
-import e from 'express';
 
 const router = express.Router();
 
@@ -102,9 +101,10 @@ router.get(
 
 		try {
 			//find file in db and make sure it belongs to the user
-			const file = await db.query(`SELECT * FROM files WHERE id = $1 AND user_id = $2`, [
-				fileId, user_id
-			]);
+			const file = await db.query(
+				`SELECT * FROM files WHERE id = $1 AND user_id = $2`,
+				[fileId, user_id]
+			);
 
 			const filesObj = file.rows;
 			if (!filesObj.length) {
@@ -112,27 +112,26 @@ router.get(
 			}
 
 			//get the file url and file name from db
-			const { url, name } = filesObj[0];
-			const lastDotIndex = url.lastIndexOf('.');
-			const ext = url.substring(lastDotIndex + 1);
+			const { url, name, ext } = filesObj[0];
+			// const lastDotIndex = url.lastIndexOf('.');
+			// const ext = url.substring(lastDotIndex + 1);
 
-			const userDownloadFolder = path.join(
-				__dirname,
-				'..',
-				'..',
-				`downloads`
-			);
-			
+			const userDownloadFolder = path.join(__dirname, '..', '..', `downloads`);
+
 			// const fileLocation = path.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
 			// if (!fs.existsSync(userDownloadFolder)) {
 			// 	console.log('folder does not exist');
 			// 	fs.mkdirSync(userDownloadFolder);
 			// }
 
-			const fileLocation = path.join(__dirname, 'downloads', `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+			const fileLocation = path.join(
+				__dirname,
+				'downloads',
+				`${name}_${Math.floor(Math.random() * 100000)}.${ext}`
+			);
 
-			console.log(fileLocation)
-			
+			console.log(fileLocation);
+
 			axios({
 				method: 'get',
 				url,
@@ -149,7 +148,7 @@ router.get(
 					writer.on('finish', () => {
 						console.log('File downloaded and saved to Downloads folder.');
 						writer.close();
-						res.send("Saved")
+						res.send('Saved');
 						// res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
 						// res.download(fileLocation, `${name}.${ext}`
 						// );
@@ -236,15 +235,18 @@ router.post(
 							});
 						}
 						const { secure_url: url } = result!;
+						const lastDotIndex = url.lastIndexOf('.');
+						const ext = url.substring(lastDotIndex + 1);
 
 						//save file to db
 						const newFile = await db.query(
-							`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
+							`INSERT INTO files (user_id, name, url, type, ext) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 							[
 								req.user?.id,
 								name ? `${name}_${Date.now()}` : `${Date.now()}`,
 								url,
 								type,
+								ext,
 							]
 						);
 
@@ -271,21 +273,37 @@ router.post(
 							});
 						}
 						const { secure_url: url } = result!;
+						const lastDotIndex = url.lastIndexOf('.');
+						const ext = url.substring(lastDotIndex + 1);
 
 						//save file to db
 						const newFile = await db.query(
-							`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
+							`INSERT INTO files (user_id, name, url, type, ext) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
 							[
 								req.user?.id,
-								name
-									? `${name}_${new Date().getTime()}`
-									: `${new Date().getTime()}`,
+								name ? `${name}_${Date.now()}` : `${Date.now()}`,
 								url,
 								type,
+								ext,
 							]
 						);
 
 						const newFileObj = newFile.rows[0];
+
+						//save file to db
+						// const newFile = await db.query(
+						// 	`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
+						// 	[
+						// 		req.user?.id,
+						// 		name
+						// 			? `${name}_${new Date().getTime()}`
+						// 			: `${new Date().getTime()}`,
+						// 		url,
+						// 		type,
+						// 	]
+						// );
+
+						// const newFileObj = newFile.rows[0];
 
 						return res.status(200).json({
 							success: true,

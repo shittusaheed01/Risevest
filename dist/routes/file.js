@@ -89,17 +89,15 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
     const user_id = (_c = req.user) === null || _c === void 0 ? void 0 : _c.id;
     try {
         //find file in db and make sure it belongs to the user
-        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1 AND user_id = $2`, [
-            fileId, user_id
-        ]);
+        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1 AND user_id = $2`, [fileId, user_id]);
         const filesObj = file.rows;
         if (!filesObj.length) {
             throw new bad_request_error_1.BadRequestError('No file found');
         }
         //get the file url and file name from db
-        const { url, name } = filesObj[0];
-        const lastDotIndex = url.lastIndexOf('.');
-        const ext = url.substring(lastDotIndex + 1);
+        const { url, name, ext } = filesObj[0];
+        // const lastDotIndex = url.lastIndexOf('.');
+        // const ext = url.substring(lastDotIndex + 1);
         const userDownloadFolder = path_1.default.join(__dirname, '..', '..', `downloads`);
         // const fileLocation = path.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
         // if (!fs.existsSync(userDownloadFolder)) {
@@ -122,7 +120,7 @@ router.get('/api/file/download/:fileId', current_user_1.currentUser, require_aut
             writer.on('finish', () => {
                 console.log('File downloaded and saved to Downloads folder.');
                 writer.close();
-                res.send("Saved");
+                res.send('Saved');
                 // res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`)
                 // res.download(fileLocation, `${name}.${ext}`
                 // );
@@ -199,12 +197,15 @@ router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requi
                         });
                     }
                     const { secure_url: url } = result;
+                    const lastDotIndex = url.lastIndexOf('.');
+                    const ext = url.substring(lastDotIndex + 1);
                     //save file to db
-                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type, ext) VALUES ($1, $2, $3, $4, $5) RETURNING *`, [
                         (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
                         name ? `${name}_${Date.now()}` : `${Date.now()}`,
                         url,
                         type,
+                        ext,
                     ]);
                     const newFileObj = newFile.rows[0];
                     return res.status(200).json({
@@ -228,16 +229,30 @@ router.post('/api/file/upload', current_user_1.currentUser, require_auth_1.requi
                         });
                     }
                     const { secure_url: url } = result;
+                    const lastDotIndex = url.lastIndexOf('.');
+                    const ext = url.substring(lastDotIndex + 1);
                     //save file to db
-                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`, [
+                    const newFile = yield db_1.db.query(`INSERT INTO files (user_id, name, url, type, ext) VALUES ($1, $2, $3, $4, $5) RETURNING *`, [
                         (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
-                        name
-                            ? `${name}_${new Date().getTime()}`
-                            : `${new Date().getTime()}`,
+                        name ? `${name}_${Date.now()}` : `${Date.now()}`,
                         url,
                         type,
+                        ext,
                     ]);
                     const newFileObj = newFile.rows[0];
+                    //save file to db
+                    // const newFile = await db.query(
+                    // 	`INSERT INTO files (user_id, name, url, type) VALUES ($1, $2, $3, $4) RETURNING *`,
+                    // 	[
+                    // 		req.user?.id,
+                    // 		name
+                    // 			? `${name}_${new Date().getTime()}`
+                    // 			: `${new Date().getTime()}`,
+                    // 		url,
+                    // 		type,
+                    // 	]
+                    // );
+                    // const newFileObj = newFile.rows[0];
                     return res.status(200).json({
                         success: true,
                         message: 'Uploaded!',
