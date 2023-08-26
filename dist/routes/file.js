@@ -83,50 +83,29 @@ router.get('/api/file/admin', current_user_1.currentUser, require_auth_1.require
     }
 }));
 //Download File
-router.get('/api/file/download/:fileId', 
-// currentUser,
-// requireAuth,
-(req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/api/file/download/:fileId', current_user_1.currentUser, require_auth_1.requireAuth, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     const { fileId } = req.params;
-    // const user_id = req.user?.id;
+    const user_id = (_c = req.user) === null || _c === void 0 ? void 0 : _c.id;
     try {
         //find file in db and make sure it belongs to the user
-        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1`, [
-            fileId,
+        const file = yield db_1.db.query(`SELECT * FROM files WHERE id = $1 AND user_id = $2`, [
+            fileId, user_id
         ]);
         const filesObj = file.rows;
         if (!filesObj.length) {
             throw new bad_request_error_1.BadRequestError('No file found');
         }
-        //file location
-        // const fileLocation = path.resolve(__dirname,'..', '../files');
-        // if (!fs.existsSync(fileLocation)) {
-        // 	console.log('folder does not exist');
-        // 	return res.send('folder does not exist');
-        // }else{
-        // 	console.log(fs.readdirSync(fileLocation));
-        // }
-        // const fileLocation = path.join('./uploads',file);
-        // res.send(filesObj[0]);
         //get the file url and file name from db
         const { url, name } = filesObj[0];
         const lastDotIndex = url.lastIndexOf('.');
         const ext = url.substring(lastDotIndex + 1);
-        // Set the local path where you want to save the downloaded file
-        const userDownloadFolder = path_1.default.join(require('os').homedir(), 'Downloads'
-        // `${name}_${Math.floor(Math.random() * 100000)}.${ext}`
-        );
+        const userDownloadFolder = path_1.default.join(__dirname, '..', '..', `downloads`);
         const fileLocation = path_1.default.resolve(userDownloadFolder, `${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
         if (!fs_1.default.existsSync(userDownloadFolder)) {
             console.log('folder does not exist');
             fs_1.default.mkdirSync(userDownloadFolder);
         }
-        // return res.send('folder does not exist');
-        // }else{
-        // 	console.log(fs.readdirSync(fileLocation));
-        // }
-        // const userDownloadFolder = `${__dirname}/files/${name}.${ext}`
-        // console.log(userDownloadFolder);
         (0, axios_1.default)({
             method: 'get',
             url,
@@ -141,11 +120,8 @@ router.get('/api/file/download/:fileId',
             writer.on('finish', () => {
                 console.log('File downloaded and saved to Downloads folder.');
                 writer.close();
-                return res.status(200).json({
-                    success: true,
-                    message: `File downloaded and saved to user's download folder.`,
-                    folder: userDownloadFolder,
-                });
+                res.setHeader('Content-Disposition', `attachment; filename=${name}_${Math.floor(Math.random() * 100000)}.${ext}`);
+                res.download(fileLocation, `${name}.${ext}`);
             });
             // Handle errors during download
             writer.on('error', (err) => {
@@ -162,7 +138,7 @@ router.get('/api/file/download/:fileId',
         })
             .catch((error) => {
             console.error('Error fetching Cloudinary URL:', error);
-            res.status(400).json({
+            return res.status(400).json({
                 errors: [
                     {
                         success: false,

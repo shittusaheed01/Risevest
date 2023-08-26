@@ -20,10 +20,12 @@ export const currentUser = (
   res: Response,
   next: NextFunction
 ) => {
-  const bearer = req.headers.authorization;
-  if (!bearer || !bearer.startsWith('Bearer ')) {
+  // const bearer = req.headers.authorization;
+  if (!req.headers || !req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
     throw new NotAuthorizedError();
   }
+
+  const bearer = req.headers.authorization;
   const token = bearer.split(' ')[1].trim();
 
   try {

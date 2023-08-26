@@ -1,0 +1,10 @@
+node_modules
+files
+.env
+.env.example
+.dockerignore
+.gitignore
+Dockerfile
+test
+packagge-lock.json
+downloads
